@@ -2,11 +2,14 @@ package com.micro_serivce.client.customer.service;
 
 import com.micro_serivce.client.customer.entity.CustomerEntity;
 import com.micro_serivce.client.customer.repository.CustomerRepository;
+import com.micro_serivce.client.helpers.CustomExceptions.ResourceNotFoundException;
+import com.micro_serivce.client.helpers.HelpersFunctions;
 import com.micro_serivce.client.person.entity.PersonEntity;
 import com.micro_serivce.client.person.service.PersonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -26,28 +29,37 @@ public class CustomerService {
         return customerRepository.findByState(state, pageable);
     }
 
-    public Optional<CustomerEntity> getCustomerByIdOrClientId(String clientId){
+    public CustomerEntity getCustomerByIdOrClientId(String clientId){
         Optional<CustomerEntity> customer = Optional.empty();
 
-        boolean isInteger = isInteger(clientId);
+        boolean isInteger = new HelpersFunctions().isInteger(clientId);
 
         if (isInteger) {
-            try {
-                customer = customerRepository.findById(Long.valueOf(clientId));
-            } catch (NumberFormatException e) {
-                customer = Optional.empty();
-            }
+            Long id = Long.valueOf(clientId);
+            return customerRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Client with ID " + clientId + " not found"));
         }
 
-        if (customer.isEmpty()) {
-            customer = customerRepository.findByClientId(clientId);
-        }
-
-        return customer;
+        return customerRepository.findByClientId(clientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Client with ID " + clientId + " not found"));
     }
 
     public CustomerEntity save(CustomerEntity customer){
-        return customerRepository.save(customer);
+        Integer personDni = customer.getPerson().getDni();
+        Integer personPhone = customer.getPerson().getPhoneNumber();
+
+        personService.verifyDeplicateData(personDni, personPhone);
+
+        PersonEntity personData = customer.getPerson();
+
+        PersonEntity newPerson = personService.save(personData);
+        CustomerEntity newCustomer = new CustomerEntity(
+                customer.getPassword(),
+                customer.getState(),
+                newPerson
+        );
+
+        return customerRepository.save(newCustomer);
     }
 
     public CustomerEntity update(Long customerId, CustomerEntity customer){
@@ -60,7 +72,7 @@ public class CustomerService {
 
         PersonEntity existingPerson = getPersonEntity(customer, currentCustomer);
 
-        personService.saveOrUpdate(existingPerson);
+        personService.save(existingPerson);
 
         customerRepository.save(currentCustomer);
         return currentCustomer;
@@ -90,22 +102,11 @@ public class CustomerService {
         return currentPersone;
     }
 
-    public boolean isInteger(String inputValue){
-        try{
-            Integer.parseInt(inputValue);
-            return true;
-        }catch(NumberFormatException e){
-            return false;
-        }
-    }
-
     public ResponseEntity<Void> delete(String clientId) {
-        Optional<CustomerEntity> currentCustomer = this.getCustomerByIdOrClientId(clientId);
+        CustomerEntity currentCustomer = this.getCustomerByIdOrClientId(clientId);
 
-        currentCustomer.ifPresent(customer -> {
-            customer.setState(false);
-            customerRepository.save(customer);
-        });
+        currentCustomer.setState(false);
+        customerRepository.save(currentCustomer);
 
         return ResponseEntity.noContent().build();
     }

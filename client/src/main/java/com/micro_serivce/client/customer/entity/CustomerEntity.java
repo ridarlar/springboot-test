@@ -1,8 +1,11 @@
 package com.micro_serivce.client.customer.entity;
 
+import com.micro_serivce.client.account.entity.AccountEntity;
 import com.micro_serivce.client.person.entity.PersonEntity;
 import jakarta.persistence.*;
 
+import java.math.BigInteger;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -22,6 +25,9 @@ public class CustomerEntity {
     @OneToOne
     @JoinColumn(name = "person_id", referencedColumnName = "id")
     private PersonEntity person;
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<AccountEntity> accounts;
 
     public CustomerEntity(){}
 
@@ -53,11 +59,11 @@ public class CustomerEntity {
     }
 
     private String generateShortUUID(){
-        String uuid = UUID.randomUUID().toString().replace("-","");
-        return uuid.substring(0,6);
-    }
+        String uuid = UUID.randomUUID().toString().replace("-", "");
 
-    public void setId(String id) {
+        String base36UUID = new BigInteger(uuid, 16).toString(36);
+
+        return base36UUID.substring(0, 6).toUpperCase();
     }
 
     public void setPassword(String password) {
@@ -66,6 +72,10 @@ public class CustomerEntity {
 
     public void setState(Boolean state) {
         this.state = state;
+    }
+
+    public void setAccounts(List<AccountEntity> accounts) {
+        this.accounts = accounts;
     }
 
     public void setPerson(PersonEntity person) {

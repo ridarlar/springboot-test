@@ -1,8 +1,7 @@
 package com.micro_serivce.client.person.entity;
 
-import com.micro_serivce.client.customer.entity.CustomerEntity;
+
 import jakarta.persistence.*;
-import lombok.*;
 
 @Entity
 @Table(name = "persons")
