@@ -12,4 +12,6 @@ public interface AccountRepository extends JpaRepository<AccountEntity, Long> {
     Page<AccountEntity> findByState(boolean state, PageRequest pageable);
 
     Optional<AccountEntity> findByAccountNumberOrId(Integer accountNumber, Long id);
+
+    Page<AccountEntity> findByStateAndCustomerId(boolean state, PageRequest pageable, Long clientId);
 }

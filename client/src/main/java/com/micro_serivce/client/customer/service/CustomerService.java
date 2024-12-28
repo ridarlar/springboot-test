@@ -65,7 +65,8 @@ public class CustomerService {
     public CustomerEntity update(Long customerId, CustomerEntity customer){
 
         CustomerEntity currentCustomer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new RuntimeException("Customer not found with id " + customerId));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer with ID " + customerId + " not found"));
+
 
         currentCustomer.setPassword(customer.getPassword());
         currentCustomer.setState(customer.getState());

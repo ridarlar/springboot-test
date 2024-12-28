@@ -1,8 +1,10 @@
 package com.micro_serivce.client.account.entity;
 
 import com.micro_serivce.client.customer.entity.CustomerEntity;
+import com.micro_serivce.client.transaction.entity.TransactionEntity;
 import jakarta.persistence.*;
 
+import java.util.List;
 import java.util.Random;
 
 @Entity
@@ -23,6 +25,9 @@ public class AccountEntity {
     @ManyToOne
     @JoinColumn(name = "customer_id", referencedColumnName = "id")
     private CustomerEntity customer;
+
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<TransactionEntity> transactions;
 
     public AccountEntity() {
     }
@@ -81,5 +86,14 @@ public class AccountEntity {
 
     public void setCustomer(CustomerEntity customer) {
         this.customer = customer;
+    }
+
+    public void addBalance(Float balance) {
+        this.balance = this.balance + balance;
+    }
+
+    public void subtrabBalance(Float balance) {
+        balance = Math.abs(balance);
+        this.balance = this.balance - balance;
     }
 }
